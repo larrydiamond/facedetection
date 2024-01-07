@@ -8,7 +8,6 @@ import threading
 
 print ("Face Detection starting")
 
-model = "hog"
 BOUNDING_BOX_COLOR = "blue"
 TEXT_COLOR = "white"
 names = []
@@ -16,10 +15,12 @@ encodings = []
 labeledDirectory = sys.argv[1]
 unknownImageLocation = sys.argv[2]
 lock = threading.Lock()
+face_location_model = 'hog'
+number_of_times_to_upsample = 2
 
 def load_threaded(file):
     image = face_recognition.load_image_file(os.path.join(labeledDirectory, file))
-    face_locations = face_recognition.face_locations(image, model = model)
+    face_locations = face_recognition.face_locations(img = image, number_of_times_to_upsample = number_of_times_to_upsample, model = face_location_model)
     face_encodings = face_recognition.face_encodings(image, face_locations)
     for encoding in face_encodings:
         lock.acquire()
@@ -47,6 +48,8 @@ def _recognize_face(unknown_encoding, loaded_encodings):
                 matches[name] += 1
         loop = loop + 1
 
+    print(str(matches))
+
     return max(matches.items(), key=operator.itemgetter(1))[0]
 
 # Load labeled images
@@ -73,14 +76,11 @@ print (end_loading_images_time - start_loading_images_time)
 print ("Loading unknown image")
 
 unknownImage = face_recognition.load_image_file(unknownImageLocation)
-input_face_locations = face_recognition.face_locations(
-    unknownImage, model=model
-)
-input_face_encodings = face_recognition.face_encodings(
-    unknownImage, input_face_locations
-)
+input_face_locations = face_recognition.face_locations(img = unknownImage, number_of_times_to_upsample = number_of_times_to_upsample, model = face_location_model)
+input_face_encodings = face_recognition.face_encodings(unknownImage, input_face_locations)
 pilImage = Image.fromarray(unknownImage)
 
+print ("Results:")
 for bounding_box, unknown_encoding in zip(
     input_face_locations, input_face_encodings
 ):
