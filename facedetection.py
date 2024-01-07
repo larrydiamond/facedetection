@@ -5,6 +5,7 @@ from PIL import Image
 import operator
 import time
 import threading
+import pyttsx3
 
 print ("Face Detection starting")
 
@@ -17,6 +18,8 @@ unknownImageLocation = sys.argv[2]
 lock = threading.Lock()
 face_location_model = 'hog'
 number_of_times_to_upsample = 2
+
+speech_engine = pyttsx3.init()
 
 def load_threaded(file):
     image = face_recognition.load_image_file(os.path.join(labeledDirectory, file))
@@ -88,9 +91,11 @@ for bounding_box, unknown_encoding in zip(
     if not name:
         name = "Unknown"
     print (name)
+    speech_engine.say("We have detected " + name)
+
 end_recognition_time = time.time()
 print (end_recognition_time - end_loading_images_time)
-
+speech_engine.runAndWait()
 
 
 
