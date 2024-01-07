@@ -3,7 +3,7 @@ import sys
 import face_recognition
 from PIL import Image
 import operator
-import threading
+import time
 
 print ("Face Detection starting")
 
@@ -24,7 +24,7 @@ def _recognize_face(unknown_encoding, loaded_encodings):
         loaded_encodings["encodings"], unknown_encoding
     )
 
-    matches = {'unknown': 1}
+    matches = {'Unknown': 0}
 
     loop = 0
     for match, name in zip(boolean_matches, loaded_encodings["names"]):
@@ -39,6 +39,7 @@ def _recognize_face(unknown_encoding, loaded_encodings):
 
 # Load labeled images
 print ("Loading known images")
+start_loading_images_time = time.time()
 
 for file in os.listdir(labeledDirectory):
     if file.endswith('.jpg'):
@@ -50,6 +51,9 @@ for file in os.listdir(labeledDirectory):
             encodings.append(encoding)
 
 name_encodings = {"names": names, "encodings": encodings}
+
+end_loading_images_time = time.time()
+print (end_loading_images_time - start_loading_images_time)
 
 # load unknown image to compare
 print ("Loading unknown image")
@@ -70,8 +74,8 @@ for bounding_box, unknown_encoding in zip(
     if not name:
         name = "Unknown"
     print (name)
-
-
+end_recognition_time = time.time()
+print (end_recognition_time - end_loading_images_time)
 
 
 
