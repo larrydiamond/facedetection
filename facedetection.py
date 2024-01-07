@@ -17,6 +17,16 @@ labeledDirectory = sys.argv[1]
 unknownImageLocation = sys.argv[2]
 lock = threading.Lock()
 
+def load_threaded(file):
+    image = face_recognition.load_image_file(os.path.join(labeledDirectory, file))
+    face_locations = face_recognition.face_locations(image, model = model)
+    face_encodings = face_recognition.face_encodings(image, face_locations)
+    for encoding in face_encodings:
+        lock.acquire()
+        names.append(file.split('_', 1)[0])
+        encodings.append(encoding)
+        lock.release()
+
 def _recognize_face(unknown_encoding, loaded_encodings):
     """
     Given an unknown encoding and all known encodings, find the known
@@ -43,16 +53,16 @@ def _recognize_face(unknown_encoding, loaded_encodings):
 print ("Loading known images")
 start_loading_images_time = time.time()
 
+threads = []
 for file in os.listdir(labeledDirectory):
     if file.endswith('.jpg'):
-        image = face_recognition.load_image_file(os.path.join(labeledDirectory, file))
-        face_locations = face_recognition.face_locations(image, model = model)
-        face_encodings = face_recognition.face_encodings(image, face_locations)
-        for encoding in face_encodings:
-            lock.acquire()
-            names.append(file.split('_', 1)[0])
-            encodings.append(encoding)
-            lock.release()
+        load_threaded(file)
+#        thread = threading.Thread(target=load_threaded, args=(file))
+#        threads.append (thread)
+#        thread.start()
+
+#for thread in threads:
+#    thread.join()
 
 name_encodings = {"names": names, "encodings": encodings}
 
