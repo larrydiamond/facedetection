@@ -4,6 +4,7 @@ import face_recognition
 from PIL import Image
 import operator
 import time
+import threading
 
 print ("Face Detection starting")
 
@@ -14,6 +15,7 @@ names = []
 encodings = []
 labeledDirectory = sys.argv[1]
 unknownImageLocation = sys.argv[2]
+lock = threading.Lock()
 
 def _recognize_face(unknown_encoding, loaded_encodings):
     """
@@ -47,8 +49,10 @@ for file in os.listdir(labeledDirectory):
         face_locations = face_recognition.face_locations(image, model = model)
         face_encodings = face_recognition.face_encodings(image, face_locations)
         for encoding in face_encodings:
+            lock.acquire()
             names.append(file.split('_', 1)[0])
             encodings.append(encoding)
+            lock.release()
 
 name_encodings = {"names": names, "encodings": encodings}
 
