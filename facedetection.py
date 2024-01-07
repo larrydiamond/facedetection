@@ -1,7 +1,7 @@
 import os
 import sys
 import face_recognition
-from PIL import Image, ImageDraw
+from PIL import Image
 import operator
 import threading
 
@@ -62,7 +62,6 @@ input_face_encodings = face_recognition.face_encodings(
     unknownImage, input_face_locations
 )
 pilImage = Image.fromarray(unknownImage)
-draw = ImageDraw.Draw(pilImage)
 
 for bounding_box, unknown_encoding in zip(
     input_face_locations, input_face_encodings
