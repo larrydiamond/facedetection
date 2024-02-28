@@ -6,6 +6,7 @@ import operator
 import time
 import threading
 import pyttsx3
+import cv2
 
 print ("Face Detection starting")
 
@@ -14,7 +15,6 @@ TEXT_COLOR = "white"
 names = []
 encodings = []
 labeledDirectory = sys.argv[1]
-unknownImageLocation = sys.argv[2]
 lock = threading.Lock()
 face_location_model = 'hog'
 number_of_times_to_upsample = 2
@@ -45,7 +45,7 @@ def _recognize_face(unknown_encoding, loaded_encodings):
     loop = 0
     for match, name in zip(boolean_matches, loaded_encodings["names"]):
         if match:
-            if not name in matches:
+            if name not in matches:
                 matches[name] = 1
             else:
                 matches[name] += 1
@@ -75,27 +75,46 @@ name_encodings = {"names": names, "encodings": encodings}
 end_loading_images_time = time.time()
 print (end_loading_images_time - start_loading_images_time)
 
-# load unknown image to compare
-print ("Loading unknown image")
+print ("Loading camera image")
 
-unknownImage = face_recognition.load_image_file(unknownImageLocation)
-input_face_locations = face_recognition.face_locations(img = unknownImage, number_of_times_to_upsample = number_of_times_to_upsample, model = face_location_model)
-input_face_encodings = face_recognition.face_encodings(unknownImage, input_face_locations)
-pilImage = Image.fromarray(unknownImage)
+videoCaptureObject = cv2.VideoCapture(0)
+lastSeen = {}
 
-print ("Results:")
-for bounding_box, unknown_encoding in zip(
-    input_face_locations, input_face_encodings
-):
-    name = _recognize_face(unknown_encoding, name_encodings)
-    if not name:
-        name = "Unknown"
-    print (name)
-    speech_engine.say("We have detected " + name)
+result = True
+while(result):
+    start_loading_camera_time = time.time()
+    ret,unknownImage = videoCaptureObject.read()
+    cv2.imwrite("NewPicture.jpg",unknownImage)
 
-end_recognition_time = time.time()
-print (end_recognition_time - end_loading_images_time)
-speech_engine.runAndWait()
+    input_face_locations = face_recognition.face_locations(img = unknownImage, number_of_times_to_upsample = number_of_times_to_upsample, model = face_location_model)
+    input_face_encodings = face_recognition.face_encodings(unknownImage, input_face_locations)
+    pilImage = Image.fromarray(unknownImage)
+
+    print ("Results:")
+    for bounding_box, unknown_encoding in zip(input_face_locations, input_face_encodings):
+        name = _recognize_face(unknown_encoding, name_encodings)
+        if not name:
+            name = "Unknown"
+
+        if name not in lastSeen:
+            print (name)
+            speech_engine.say("We have detected " + name)
+            lastSeen[name] = time.time()
+        else:
+            lastTime = lastSeen[name]
+            currentTime = time.time()
+            if (currentTime - lastTime) > 60:
+                print (name)
+                speech_engine.say("We have detected " + name)
+            else:
+                print ("already saw " + name)
+            lastSeen[name] = time.time()
+
+    end_recognition_time = time.time()
+    print (end_recognition_time - start_loading_camera_time)
+    speech_engine.runAndWait()
+
+videoCaptureObject.release()
 
 
 
